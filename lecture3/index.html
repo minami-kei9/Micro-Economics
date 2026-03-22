@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture Note 3 | Extensive-Form Games</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0d14;
+    --bg2:      #0e1219;
+    --surface:  #131825;
+    --surface2: #18202f;
+    --surface3: #1c2638;
+    --border:   #243045;
+    --border2:  #2e3d58;
+    --text:     #d8e4f0;
+    --muted:    #5a7a9e;
+    --accent:   #5b9cf6;
+    --accent2:  #84b8ff;
+    --gold:     #c8a84b;
+    --gold2:    #e8c96a;
+    --green:    #4cc97a;
+    --red:      #f07070;
+    --purple:   #c084f0;
+    --orange:   #f0a050;
+    --teal:     #40d0c0;
+    --dim:      #8aaac8;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(91,156,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(91,156,246,0.03) 1px, transparent 1px);
+    background-size: 52px 52px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 1;
+    background: linear-gradient(155deg, #0d1220 0%, #0a0d14 70%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 48px 52px;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; top: -100px; right: -80px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(91,156,246,0.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .header-inner { max-width: 960px; margin: 0 auto; position: relative; z-index: 1; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(91,156,246,0.25);
+    background: rgba(91,156,246,0.06);
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 22px;
+  }
+  .header-badge::before { content: '◆'; font-size: 8px; }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 10px;
+  }
+  h1 .hl { color: var(--accent2); font-style: italic; font-weight: 700; }
+  .header-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+  .header-nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .nav-link {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--muted); text-decoration: none;
+    border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { color: var(--accent); border-color: var(--border2); }
+  .nav-sep { color: var(--border2); }
+  .nav-curr { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); }
+
+  /* ── TOC ── */
+  .toc-wrap { max-width: 960px; margin: 36px auto; padding: 0 48px; position: relative; z-index: 1; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; }
+  .toc-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .toc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px; }
+  .toc-item { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--muted); font-size: 13.5px; padding: 6px 10px; border-radius: 8px; transition: all 0.2s; }
+  .toc-item:hover { background: var(--surface2); color: var(--accent2); }
+  .toc-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); min-width: 20px; }
+
+  /* ── MAIN ── */
+  main { max-width: 960px; margin: 0 auto; padding: 0 48px 80px; position: relative; z-index: 1; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 60px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .sec-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); background: rgba(91,156,246,0.1); border: 1px solid rgba(91,156,246,0.2); padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 1.85rem; font-weight: 700; color: #fff; }
+  h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--gold2); margin: 26px 0 12px; padding-left: 14px; border-left: 3px solid var(--gold); }
+  p { margin-bottom: 12px; font-size: 15px; }
+
+  /* ── BOXES ── */
+  .def-box { background: var(--surface2); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 18px 22px; margin: 18px 0; }
+  .def-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .theorem-box { background: rgba(200,168,75,0.06); border: 1px solid rgba(200,168,75,0.22); border-radius: 10px; padding: 18px 22px; margin: 18px 0; }
+  .thm-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .example-box { background: var(--surface3); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 18px 0; }
+  .ex-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--orange); margin-bottom: 12px; }
+  .insight { background: rgba(192,132,240,0.06); border: 1px solid rgba(192,132,240,0.2); border-radius: 10px; padding: 18px 22px; margin: 18px 0; }
+  .ins-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+  .warn-box { background: rgba(240,112,112,0.06); border-left: 3px solid var(--red); border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 18px 0; }
+  .warn-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+  .key-box { background: rgba(64,208,192,0.05); border: 1px solid rgba(64,208,192,0.2); border-radius: 10px; padding: 18px 22px; margin: 18px 0; }
+  .key-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+  .green-box { background: rgba(76,201,122,0.06); border-left: 3px solid var(--green); border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 18px 0; }
+  .green-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+
+  /* ── LIST ── */
+  .sl { list-style: none; padding-left: 4px; }
+  .sl li { padding: 4px 0 4px 22px; position: relative; font-size: 15px; }
+  .sl li::before { content: '▸'; position: absolute; left: 0; top: 7px; color: var(--accent); font-size: 11px; }
+  .sl li.sub { padding-left: 40px; }
+  .sl li.sub::before { left: 18px; color: var(--muted); }
+
+  /* ── STEP LIST ── */
+  .step-list { list-style: none; counter-reset: s; }
+  .step-list li { counter-increment: s; padding: 10px 0 10px 50px; position: relative; font-size: 15px; border-bottom: 1px solid rgba(36,48,69,0.5); }
+  .step-list li:last-child { border-bottom: none; }
+  .step-list li::before { content: counter(s); position: absolute; left: 0; top: 8px; width: 28px; height: 28px; background: rgba(91,156,246,0.12); border: 1px solid rgba(91,156,246,0.25); color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+
+  /* ── PAYOFF MATRIX ── */
+  .mx-wrap { overflow-x: auto; margin: 14px 0; }
+  .mx { border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .mx th, .mx td { border: 1px solid var(--border); padding: 9px 18px; text-align: center; min-width: 80px; }
+  .mx th { background: var(--surface2); color: var(--accent2); }
+  .mx td { background: var(--surface3); }
+  .mx .plbl { background: transparent; border: none; color: var(--muted); font-size: 11px; }
+  .ne-cell { background: rgba(91,156,246,0.15) !important; color: var(--accent2) !important; font-weight: 600; }
+  .spne-cell { background: rgba(76,201,122,0.15) !important; color: var(--green) !important; font-weight: 600; }
+
+  /* ── COMPARISON TABLE ── */
+  .ct { width: 100%; border-collapse: collapse; font-size: 14px; margin: 14px 0; }
+  .ct th { background: var(--surface2); color: var(--accent2); padding: 10px 14px; text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
+  .ct td { padding: 11px 14px; border-bottom: 1px solid rgba(36,48,69,0.5); vertical-align: top; }
+  .ct tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* ── TWO COL / CARD ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: var(--gold2); margin-bottom: 10px; }
+
+  /* ── MATH ── */
+  .math { font-family: 'JetBrains Mono', monospace; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-size: 13px; color: var(--accent2); overflow-x: auto; line-height: 1.9; }
+  .mi { font-family: 'JetBrains Mono', monospace; background: rgba(91,156,246,0.08); color: var(--accent2); padding: 1px 6px; border-radius: 4px; font-size: 93%; }
+
+  /* ── TAG ── */
+  .tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 9px; border-radius: 10px; margin: 2px 3px; }
+  .tb  { background: rgba(91,156,246,0.12); color: var(--accent2); border: 1px solid rgba(91,156,246,0.25); }
+  .tg  { background: rgba(76,201,122,0.12); color: var(--green); border: 1px solid rgba(76,201,122,0.25); }
+  .tp  { background: rgba(192,132,240,0.12); color: var(--purple); border: 1px solid rgba(192,132,240,0.25); }
+  .to  { background: rgba(240,160,80,0.12); color: var(--orange); border: 1px solid rgba(240,160,80,0.25); }
+  .tr  { background: rgba(240,112,112,0.12); color: var(--red); border: 1px solid rgba(240,112,112,0.25); }
+  .tt  { background: rgba(64,208,192,0.12); color: var(--teal); border: 1px solid rgba(64,208,192,0.25); }
+
+  /* ── GAME TREE SVG ── */
+  .tree-wrap { display: flex; justify-content: center; margin: 20px 0; overflow-x: auto; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: linear-gradient(to right, transparent, var(--border), transparent); margin: 40px 0; }
+
+  /* ── BACK TO TOP ── */
+  .back-top { position: fixed; bottom: 28px; right: 28px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); text-decoration: none; padding: 9px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; transition: all 0.2s; z-index: 99; }
+  .back-top:hover { color: var(--accent); border-color: var(--border2); }
+
+  @media (max-width: 640px) {
+    header, .toc-wrap, main { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-badge">Lecture Note 03 · Extensive-Form Games</div>
+    <h1>Extensive-Form<br><span class="hl">Games</span></h1>
+    <p class="header-sub">Keeyoung Rhee · Sungkyunkwan University (SKKU) · Spring 2024</p>
+    <div class="header-nav">
+      <a class="nav-link" href="../index.html">← 목차로</a>
+      <span class="nav-sep">/</span>
+      <a class="nav-link" href="../lecture2/index.html">← LN 02</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-curr">LN 03 — Extensive-Form Games</span>
+    </div>
+  </div>
+</header>
+
+<div class="toc-wrap">
+  <div class="toc">
+    <div class="toc-title">📚 목차</div>
+    <div class="toc-list">
+      <a class="toc-item" href="#s1"><span class="toc-n">01</span>왜 Dynamic이 필요한가?</a>
+      <a class="toc-item" href="#s2"><span class="toc-n">02</span>Tree와 Extensive Form 정의</a>
+      <a class="toc-item" href="#s3"><span class="toc-n">03</span>Information Set / Partition</a>
+      <a class="toc-item" href="#s4"><span class="toc-n">04</span>전략의 정의 (Action vs Strategy)</a>
+      <a class="toc-item" href="#s5"><span class="toc-n">05</span>Strategic Form vs Extensive Form</a>
+      <a class="toc-item" href="#s6"><span class="toc-n">06</span>Nash Equilibrium in Extensive Form</a>
+      <a class="toc-item" href="#s7"><span class="toc-n">07</span>Backward Induction & Sequential Rationality</a>
+      <a class="toc-item" href="#s8"><span class="toc-n">08</span>BI의 성질과 한계</a>
+      <a class="toc-item" href="#s9"><span class="toc-n">09</span>Subgame & SPNE 정의</a>
+      <a class="toc-item" href="#s10"><span class="toc-n">10</span>SPNE 계산 예시</a>
+      <a class="toc-item" href="#s11"><span class="toc-n">11</span>SPNE의 한계: Forward Induction</a>
+      <a class="toc-item" href="#s12"><span class="toc-n">12</span>응용: Stackelberg Competition</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ====== S1 ====== -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="sec-num">§ 01</span>
+    <h2>왜 Dynamic이 필요한가?</h2>
+  </div>
+
+  <p>지금까지 분석한 Strategic-Form 게임은 <strong>타이밍(timing)이 없다</strong>. 모든 플레이어가 동시에 결정하거나, 상대방의 행동을 모르고 결정한다고 가정한다. 하지만 현실의 많은 상황에서는 플레이어들이 <strong>순차적으로(sequentially)</strong> 움직인다.</p>
+
+  <h3>Cournot → Stackelberg: 순서가 결과를 바꾼다</h3>
+  <div class="example-box">
+    <div class="ex-label">비교 예시 — a=1, c=0</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title" style="color:var(--muted);">Cournot (동시)</div>
+        <p style="font-size:13px;">두 기업이 동시에 생산량 결정</p>
+        <div class="math" style="font-size:12px;">NE: q₁* = q₂* = 1/3
+보수: u₁ = u₂ = 1/9</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--accent2);">Stackelberg (순차)</div>
+        <p style="font-size:13px;">Firm 1이 먼저, Firm 2가 관찰 후 결정</p>
+        <div class="math" style="font-size:12px;">SPNE: q₁* = 1/2, q₂* = 1/4
+보수: u₁ = 1/8 > 1/9</div>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:12px;">
+      <div class="ins-label">💡 First-mover Advantage</div>
+      <p>순서가 달라지면 균형도 달라진다. Stackelberg에서 Firm 1은 <strong>선점 이득(first-mover advantage)</strong>을 얻는다. 이를 분석하려면 Extensive Form이 필요하다.</p>
+    </div>
+  </div>
+
+  <h3>Matching Pennies: 순서가 달라지면?</h3>
+  <p>LN2의 동시 게임 Matching Pennies에서는 순수전략 NE가 없었다. 그런데 <strong>Anne이 Bob 다음에 움직인다</strong>면? Backward Induction으로 풀면:</p>
+  <ul class="sl">
+    <li>Bob이 H를 선택하면 → Anne은 H (payoff +1)</li>
+    <li>Bob이 T를 선택하면 → Anne은 T (payoff +1)</li>
+    <li>Bob은 어떻게 해도 −1 → 무차별 → (H,H) 또는 (T,T)</li>
+  </ul>
+  <div class="key-box">
+    <div class="key-label">🔑 Second-mover Advantage</div>
+    <p>Anne이 나중에 움직이면 항상 이긴다 — <strong>second-mover advantage</strong>! 동시 게임과는 완전히 다른 결과가 나온다.</p>
+  </div>
+</div>
+
+<!-- ====== S2 ====== -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="sec-num">§ 02</span>
+    <h2>Tree와 Extensive Form 게임 정의</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Tree (트리)</div>
+    <p>트리는 노드(nodes)들이 방향 있는 호(directed arcs)로 연결된 집합으로, 다음 조건을 만족한다:</p>
+    <ol class="step-list" style="margin-top:10px;">
+      <li><strong>초기 노드(initial node)</strong>가 하나 존재한다</li>
+      <li>초기 노드 이외의 <strong>각 노드에 들어오는 호(arc)가 정확히 하나</strong>이다</li>
+      <li>각 노드는 <strong>유일한 경로(unique path)</strong>를 통해 도달 가능하다</li>
+    </ol>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Extensive Form Game</div>
+    <p>다음 요소들로 구성된다:</p>
+    <ul class="sl" style="margin-top:8px;">
+      <li><strong>Players</strong> — 플레이어 집합</li>
+      <li><strong>Tree</strong> — 게임의 구조를 나타내는 트리</li>
+      <li><strong>Player allocation</strong> — 각 비단말 노드(non-terminal node)에 플레이어 배정</li>
+      <li><strong>Information partition</strong> — 정보 집합의 분할</li>
+      <li><strong>Payoffs</strong> — 각 단말 노드(terminal node)에서의 플레이어별 보수</li>
+    </ul>
+  </div>
+
+  <h3>노드의 종류</h3>
+  <table class="ct">
+    <thead><tr><th>종류</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Initial node</strong></td><td>게임이 시작되는 유일한 루트 노드 (들어오는 호 없음)</td></tr>
+      <tr><td><strong>Non-terminal node</strong></td><td>의사결정이 이루어지는 노드; 특정 플레이어에게 배정됨</td></tr>
+      <tr><td><strong>Terminal node</strong></td><td>게임이 끝나는 노드; 보수 벡터가 정의됨 (나가는 호 없음)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Extensive Form 게임 트리 예시</h3>
+  <div class="tree-wrap">
+    <svg width="480" height="280" viewBox="0 0 480 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- 메인 트리: Player 0 루트 → Player 1 (L/R) → Player 2 분기 -->
+      <!-- Root: Player 0 at top -->
+      <line x1="240" y1="40" x2="120" y2="120" stroke="#243045" stroke-width="1.5"/>
+      <line x1="240" y1="40" x2="360" y2="120" stroke="#243045" stroke-width="1.5"/>
+      <!-- Left branch: Player 1 → a/b -->
+      <line x1="120" y1="120" x2="60"  y2="200" stroke="#243045" stroke-width="1.5"/>
+      <line x1="120" y1="120" x2="180" y2="200" stroke="#243045" stroke-width="1.5"/>
+      <!-- Right branch: Player 1 → c/d -->
+      <line x1="360" y1="120" x2="300" y2="200" stroke="#243045" stroke-width="1.5"/>
+      <line x1="360" y1="120" x2="420" y2="200" stroke="#243045" stroke-width="1.5"/>
+      <!-- Right-right branch: Player 2 → s/t under d -->
+      <line x1="420" y1="200" x2="400" y2="258" stroke="#243045" stroke-width="1.2"/>
+      <line x1="420" y1="200" x2="440" y2="258" stroke="#243045" stroke-width="1.2"/>
+
+      <!-- Nodes -->
+      <circle cx="240" cy="40"  r="14" fill="#131825" stroke="#5b9cf6" stroke-width="1.8"/>
+      <circle cx="120" cy="120" r="12" fill="#131825" stroke="#c8a84b" stroke-width="1.5"/>
+      <circle cx="360" cy="120" r="12" fill="#131825" stroke="#c8a84b" stroke-width="1.5"/>
+      <circle cx="420" cy="200" r="10" fill="#131825" stroke="#4cc97a" stroke-width="1.5"/>
+
+      <!-- Terminal nodes -->
+      <rect x="44"  y="190" width="32" height="22" rx="5" fill="#18202f" stroke="#243045"/>
+      <rect x="164" y="190" width="32" height="22" rx="5" fill="#18202f" stroke="#243045"/>
+      <rect x="284" y="190" width="32" height="22" rx="5" fill="#18202f" stroke="#243045"/>
+      <rect x="390" y="252" width="22" height="18" rx="4" fill="#18202f" stroke="#243045"/>
+      <rect x="430" y="252" width="22" height="18" rx="4" fill="#18202f" stroke="#243045"/>
+
+      <!-- Node labels -->
+      <text x="240" y="45" text-anchor="middle" font-size="11" fill="#5b9cf6" font-family="JetBrains Mono, monospace">P0</text>
+      <text x="120" y="124" text-anchor="middle" font-size="11" fill="#c8a84b" font-family="JetBrains Mono, monospace">P1</text>
+      <text x="360" y="124" text-anchor="middle" font-size="11" fill="#c8a84b" font-family="JetBrains Mono, monospace">P1</text>
+      <text x="420" y="204" text-anchor="middle" font-size="10" fill="#4cc97a" font-family="JetBrains Mono, monospace">P2</text>
+
+      <!-- Edge labels -->
+      <text x="172" y="76" text-anchor="middle" font-size="12" fill="#84b8ff" font-family="JetBrains Mono, monospace">L</text>
+      <text x="308" y="76" text-anchor="middle" font-size="12" fill="#84b8ff" font-family="JetBrains Mono, monospace">R</text>
+      <text x="82"  y="168" text-anchor="middle" font-size="12" fill="#8aaac8" font-family="JetBrains Mono, monospace">a</text>
+      <text x="158" y="168" text-anchor="middle" font-size="12" fill="#8aaac8" font-family="JetBrains Mono, monospace">b</text>
+      <text x="322" y="168" text-anchor="middle" font-size="12" fill="#8aaac8" font-family="JetBrains Mono, monospace">c</text>
+      <text x="398" y="168" text-anchor="middle" font-size="12" fill="#8aaac8" font-family="JetBrains Mono, monospace">d</text>
+      <text x="405" y="234" text-anchor="middle" font-size="11" fill="#6b9a8a" font-family="JetBrains Mono, monospace">s</text>
+      <text x="445" y="234" text-anchor="middle" font-size="11" fill="#6b9a8a" font-family="JetBrains Mono, monospace">t</text>
+
+      <!-- Payoffs -->
+      <text x="60"  y="205" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono, monospace">1,0</text>
+      <text x="180" y="205" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono, monospace">2,3</text>
+      <text x="300" y="205" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono, monospace">−1,0</text>
+      <text x="401" y="265" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono, monospace">0,1</text>
+      <text x="441" y="265" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono, monospace">−1,0</text>
+    </svg>
+  </div>
+  <p style="font-size:13px;color:var(--muted);text-align:center;">파란 노드: initial node / 금색 노드: P1의 decision node / 초록 노드: P2의 decision node</p>
+</div>
+
+<!-- ====== S3 ====== -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="sec-num">§ 03</span>
+    <h2>Information Set / Partition</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Information Set (정보 집합)</div>
+    <p>정보 집합은 다음 조건을 만족하는 노드들의 집합이다:</p>
+    <ul class="sl" style="margin-top:8px;">
+      <li>집합 내 <strong>모든 노드에서 동일한 플레이어</strong>가 행동한다</li>
+      <li>집합 내 <strong>모든 노드에서 동일한 행동 집합</strong>이 가능하다</li>
+    </ul>
+    <p style="margin-top:10px; font-size:14px; color:var(--muted);">플레이어가 자신이 어느 노드에 있는지 모를 수 있다 → 두 노드 이상이 점선으로 묶임 = <strong>non-singleton information set</strong></p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Information Partition (정보 분할)</div>
+    <p>트리의 모든 비단말 노드를 정보 집합으로 분할(partition)하는 것. 각 노드는 <strong>정확히 하나의 정보 집합</strong>에 속한다.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">순차 게임 (Singleton IS)</div>
+      <p style="font-size:13px;">Anne이 Bob의 행동을 보고 결정한다. 각 노드가 별도의 정보 집합 — <strong>완전 정보(perfect information)</strong>.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">Anne의 정보집합: {ha(1)}, {ha(2)} (둘 다 singleton)</p>
+    </div>
+    <div class="card">
+      <div class="card-title">동시 게임 (Non-singleton IS)</div>
+      <p style="font-size:13px;">Anne이 Bob의 행동을 모르고 결정. 두 노드가 점선으로 묶임 — <strong>불완전 정보(imperfect information)</strong>.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px;">Anne의 정보집합: {ha(1), ha(2)} (non-singleton)</p>
+    </div>
+  </div>
+
+  <h3>공식 표기</h3>
+  <div class="math">
+h(x)      : 노드 x가 속한 정보 집합
+A(x)      : 노드 x에서 가능한 행동 집합
+x' ∈ h(x) : x와 같은 정보 집합 → 같은 플레이어, 같은 행동 집합
+           즉, A(x') = A(x)
+A(h')  ≡  A(x') = A(x)  where h' ≡ h(x') = h(x)
+  </div>
+</div>
+
+<!-- ====== S4 ====== -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="sec-num">§ 04</span>
+    <h2>전략의 정의: Action vs Strategy</h2>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-label">⚠️ 시험 필수 구별!</div>
+    <p>Extensive Form에서 <strong>action(행동)</strong>과 <strong>strategy(전략)</strong>는 다른 개념이다!</p>
+  </div>
+
+  <table class="ct">
+    <thead><tr><th>개념</th><th>정의</th><th>예시</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Action</strong></td>
+        <td>특정 정보집합에서 선택하는 단일 행동</td>
+        <td>ha(1)에서 "H를 선택"</td>
+      </tr>
+      <tr>
+        <td><strong>Strategy</strong></td>
+        <td>자신이 움직이는 <em>모든</em> 정보집합에 대한 완전한 행동 계획 (contingent plan)</td>
+        <td>{ha(1)→H, ha(2)→T} = "HT"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Pure Strategy (순수전략)</div>
+    <p>플레이어 i의 순수전략은 자신의 모든 정보집합 <span class="mi">hᵢ ∈ Hᵢ</span>에 행동을 배정하는 함수:</p>
+    <div class="math">sᵢ : Hᵢ → Aᵢ,  with  sᵢ(hᵢ) ∈ A(hᵢ)  for all  hᵢ ∈ Hᵢ
+
+순수전략 공간:  Sᵢ = ∏_{hᵢ ∈ Hᵢ} A(hᵢ)   (각 IS별 행동집합의 직적)</div>
+    <p style="font-size:14px; color:var(--muted);">혼합전략(Mixed strategy) = 순수전략들에 대한 확률 분포</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-label">Example — 순차 Matching Pennies에서의 전략</div>
+    <p>Bob이 먼저 H/T 선택. Anne이 Bob의 행동을 보고 결정.</p>
+    <p>Anne의 정보집합: <span class="mi">ha(1)</span> (Bob이 H 선택 후) 와 <span class="mi">ha(2)</span> (Bob이 T 선택 후)</p>
+    <div class="math">
+Bob의 순수전략:  {H, T}   ← 정보집합 1개, 행동 2개
+
+Anne의 순수전략:  sA : {ha(1), ha(2)} → {H, T}
+  SA = {HH, HT, TH, TT}   ← 4가지 전략
+  예) "HT" = Bob이 H를 선택하면 H, T를 선택하면 T
+    </div>
+    <div class="insight">
+      <div class="ins-label">💡 핵심</div>
+      <p>전략은 <strong>실제로 도달하지 않을 정보집합에 대해서도</strong> 행동을 명시해야 한다. "어떤 상황에서도 내가 무엇을 할지"의 완전한 계획이기 때문이다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S5 ====== -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="sec-num">§ 05</span>
+    <h2>Strategic Form vs Extensive Form</h2>
+  </div>
+
+  <p>모든 Extensive Form 게임은 전략들을 나열하면 Strategic Form(정규형 행렬)으로 변환할 수 있다.</p>
+
+  <div class="example-box">
+    <div class="ex-label">순차 Matching Pennies: Extensive → Strategic</div>
+    <p>Bob: {H, T} / Anne: {HH, HT, TH, TT}</p>
+    <div class="mx-wrap">
+      <table class="mx">
+        <tr><td class="plbl">Bob ↓ / Anne →</td><th>HH</th><th>HT</th><th>TH</th><th>TT</th></tr>
+        <tr><th>H</th><td class="ne-cell">−1, +1</td><td>+1, −1</td><td class="ne-cell">−1, +1</td><td>+1, −1</td></tr>
+        <tr><th>T</th><td>+1, −1</td><td class="ne-cell">+1, −1</td><td>−1, +1</td><td class="ne-cell">−1, +1</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="theorem-box">
+    <div class="thm-label">Theorem — 변환의 방향성</div>
+    <ul class="sl">
+      <li><strong>Extensive Form → Normal Form</strong>: 항상 유일하게 변환 가능 (전략을 적절히 명명할 경우)</li>
+      <li><strong>Normal Form → Extensive Form</strong>: <span class="tag tr">역은 성립하지 않음!</span> 하나의 정규형에 여러 Extensive Form이 대응될 수 있음</li>
+    </ul>
+  </div>
+
+  <div class="insight">
+    <div class="ins-label">💡 정규형의 두 가지 해석</div>
+    <ul class="sl">
+      <li>게임이 진정으로 <strong>동시에 플레이</strong>된다</li>
+      <li>게임이 순차적이지만 <strong>동적 구조를 추상화</strong>하여 표현한다</li>
+    </ul>
+    <p style="margin-top:8px;">정규형으로 변환하면 타이밍 정보가 손실되므로, 동적 측면이 중요한 경우 Extensive Form을 직접 분석해야 한다.</p>
+  </div>
+</div>
+
+<!-- ====== S6 ====== -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="sec-num">§ 06</span>
+    <h2>Nash Equilibrium in Extensive Form</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — NE in Extensive Form</div>
+    <p>Extensive Form 게임의 Nash Equilibrium은 해당 게임의 <strong>정규형 표현의 Nash Equilibrium</strong>으로 정의된다.</p>
+  </div>
+
+  <h3>문제점: 비신뢰적 위협(Non-credible Threats)</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — NE가 합리적이지 않은 경우</div>
+    <div class="tree-wrap">
+      <svg width="360" height="200" viewBox="0 0 360 200" xmlns="http://www.w3.org/2000/svg">
+        <line x1="180" y1="35" x2="90" y2="110" stroke="#243045" stroke-width="1.5"/>
+        <line x1="180" y1="35" x2="270" y2="110" stroke="#243045" stroke-width="1.5"/>
+        <line x1="90"  y1="110" x2="45"  y2="175" stroke="#243045" stroke-width="1.5"/>
+        <line x1="90"  y1="110" x2="135" y2="175" stroke="#243045" stroke-width="1.5"/>
+        <line x1="270" y1="110" x2="225" y2="175" stroke="#243045" stroke-width="1.5"/>
+        <line x1="270" y1="110" x2="315" y2="175" stroke="#243045" stroke-width="1.5"/>
+        <circle cx="180" cy="35"  r="12" fill="#131825" stroke="#5b9cf6" stroke-width="1.8"/>
+        <circle cx="90"  cy="110" r="10" fill="#131825" stroke="#c8a84b" stroke-width="1.5"/>
+        <circle cx="270" cy="110" r="10" fill="#131825" stroke="#c8a84b" stroke-width="1.5"/>
+        <rect x="30"  y="167" width="30" height="20" rx="4" fill="#18202f" stroke="#243045"/>
+        <rect x="120" y="167" width="30" height="20" rx="4" fill="#18202f" stroke="#243045"/>
+        <rect x="210" y="167" width="30" height="20" rx="4" fill="#18202f" stroke="#243045"/>
+        <rect x="300" y="167" width="30" height="20" rx="4" fill="#18202f" stroke="#243045"/>
+        <text x="180" y="39" text-anchor="middle" font-size="10" fill="#5b9cf6" font-family="JetBrains Mono">Anne</text>
+        <text x="90"  y="114" text-anchor="middle" font-size="10" fill="#c8a84b" font-family="JetBrains Mono">Bob</text>
+        <text x="270" y="114" text-anchor="middle" font-size="10" fill="#c8a84b" font-family="JetBrains Mono">Bob</text>
+        <text x="130" y="70" text-anchor="middle" font-size="12" fill="#84b8ff" font-family="JetBrains Mono">a</text>
+        <text x="230" y="70" text-anchor="middle" font-size="12" fill="#84b8ff" font-family="JetBrains Mono">b</text>
+        <text x="58"  y="148" text-anchor="middle" font-size="11" fill="#8aaac8" font-family="JetBrains Mono">c</text>
+        <text x="122" y="148" text-anchor="middle" font-size="11" fill="#8aaac8" font-family="JetBrains Mono">d</text>
+        <text x="238" y="148" text-anchor="middle" font-size="11" fill="#8aaac8" font-family="JetBrains Mono">e</text>
+        <text x="318" y="148" text-anchor="middle" font-size="11" fill="#8aaac8" font-family="JetBrains Mono">f</text>
+        <text x="45"  y="181" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono">6,9</text>
+        <text x="135" y="181" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono">7,5</text>
+        <text x="225" y="181" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono">5,4</text>
+        <text x="315" y="181" text-anchor="middle" font-size="10" fill="#e8c96a" font-family="JetBrains Mono">8,6</text>
+      </svg>
+    </div>
+    <div class="mx-wrap">
+      <table class="mx">
+        <tr><td class="plbl">Anne ↓ / Bob →</td><th>ce</th><th>cf</th><th>de</th><th>df</th></tr>
+        <tr><th>a</th><td class="ne-cell">6, 9</td><td class="ne-cell">6, 9</td><td>7, 5</td><td>7, 5</td></tr>
+        <tr><th>b</th><td>5, 4</td><td class="ne-cell">8, 6</td><td>5, 4</td><td>8, 6</td></tr>
+      </table>
+    </div>
+    <p>정규형 NE: <span class="tag tb">(a, ce)</span>, <span class="tag tb">(a, cf)</span>, <span class="tag tg">(b, cf)</span> — 세 개</p>
+    <div class="warn-box" style="margin-top:10px;">
+      <div class="warn-label">⚠️ 비신뢰적 NE</div>
+      <p>Bob이 실제로 c-e 분기에 도달하면 <strong>f를 선택한다 (6 > 5)</strong>. Bob이 e를 선택한다는 위협은 <strong>비신뢰적(non-credible)</strong>이다. (a, ce)와 (a, cf)는 이 역동적 측면을 놓친다.</p>
+      <p style="margin-top:6px;"><strong>Backward Induction과 일치하는 유일한 NE: (b, cf)</strong></p>
+    </div>
+  </div>
+
+  <h3>Putin-Trump 예시</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — Credibility of Threats</div>
+    <div class="mx-wrap">
+      <table class="mx">
+        <tr><td class="plbl">Putin ↓ / Trump →</td><th>Fight</th><th>Not Fight</th></tr>
+        <tr><th>Invade</th><td>−2, −2</td><td class="ne-cell">+1, −1</td></tr>
+        <tr><th>Not Invade</th><td class="ne-cell">0, 0</td><td class="ne-cell">0, 0</td></tr>
+      </table>
+    </div>
+    <p>NE가 두 개: (Invade, Not Fight)와 (Not Invade, Fight)</p>
+    <div class="insight">
+      <div class="ins-label">💡 어느 NE가 신뢰적인가?</div>
+      <p>Putin이 Invade를 선택한 상황에서, Trump는 Fight(−2)보다 Not Fight(−1)를 선택한다. 따라서 Trump의 "Fight" 위협은 <strong>비신뢰적</strong>이다. 신뢰적인 NE는 <span class="tag tg">(Invade, Not Fight)</span> 하나뿐.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S7 ====== -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="sec-num">§ 07</span>
+    <h2>Backward Induction &amp; Sequential Rationality</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Sequential Rationality (순차적 합리성)</div>
+    <p>플레이어의 전략이 <strong>sequential rationality</strong>를 만족한다 ⟺ <strong>자신이 움직이는 모든 정보집합에서</strong>, 해당 시점부터의 기대보수를 극대화하는 행동을 선택한다.</p>
+    <p style="margin-top:8px; font-size:14px; color:var(--muted);">핵심: 실제로 도달하지 않을 것으로 예상되는 정보집합에서도 최적 행동을 명시해야 한다.</p>
+  </div>
+
+  <h3>Backward Induction (역진귀납법) 절차</h3>
+  <ol class="step-list">
+    <li>게임 트리의 <strong>가장 끝(마지막 결정 노드)</strong>에서 시작한다.</li>
+    <li>마지막 단계 플레이어는 자신의 보수를 극대화하는 행동을 선택한다.</li>
+    <li>이전 단계 플레이어는 <strong>뒤 단계 플레이어가 위처럼 행동할 것을 알고</strong> 자신의 보수를 극대화한다.</li>
+    <li>초기 노드까지 이 과정을 반복한다.</li>
+  </ol>
+
+  <div class="key-box">
+    <div class="key-label">🔑 Backward Induction = CKSR (공통지식 가정)</div>
+    <p>BI를 적용한다는 것은 <strong>순차적 합리성의 공통지식(Common Knowledge of Sequential Rationality)</strong>을 가정하는 것이다.</p>
+    <ul class="sl" style="margin-top:8px;">
+      <li>마지막 단계 플레이어는 합리적으로 행동한다</li>
+      <li>그 전 단계 플레이어는 마지막 단계가 합리적임을 알고 행동한다</li>
+      <li>그 전전 단계 플레이어는... (무한 반복)</li>
+    </ul>
+  </div>
+
+  <h3>Centipede Game — BI의 역설</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — Centipede Game</div>
+    <div style="overflow-x:auto; margin:12px 0;">
+      <table style="border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text);">
+        <tr>
+          <td style="padding:6px 10px; color:var(--accent);">P1</td>
+          <td style="padding:6px 4px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 10px; color:var(--accent2);">P2</td>
+          <td style="padding:6px 4px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 10px; color:var(--accent);">P1</td>
+          <td style="padding:6px 4px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 10px; color:var(--accent2);">P2</td>
+          <td style="padding:6px 4px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 10px; color:var(--accent);">P1</td>
+          <td style="padding:6px 4px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 10px; color:var(--accent2);">P2</td>
+          <td style="padding:6px 6px; color:var(--muted);">Pass</td>
+          <td style="padding:6px 8px; color:var(--gold);">128, 32</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td style="color:var(--red); font-size:11px;">Take↓</td>
+          <td></td>
+        </tr>
+      </table>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px; display:flex; gap:20px; flex-wrap:wrap;">
+        <span>Take₁: <span style="color:var(--gold);">2, 0.5</span></span>
+        <span>Take₂: <span style="color:var(--gold);">1, 4</span></span>
+        <span>Take₁: <span style="color:var(--gold);">8, 2</span></span>
+        <span>Take₂: <span style="color:var(--gold);">4, 16</span></span>
+        <span>Take₁: <span style="color:var(--gold);">32, 8</span></span>
+        <span>Take₂: <span style="color:var(--gold);">16, 64</span></span>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:12px;">
+      <div class="warn-label">⚠️ BI vs CKSR</div>
+      <p>BI에 따르면 P1이 첫 노드에서 즉시 Take해야 한다. 하지만 현실 실험에서는 Pass가 많이 관찰된다. 왜?</p>
+      <p style="margin-top:6px;"><strong>CKSR ≠ CKR (공통지식 합리성)</strong>: P1이 Pass를 선택하면, P2는 "P1이 비합리적인가?" 의문을 가질 수 있고, 이후 추론 체계 전체가 흔들릴 수 있다. CKSR은 강한 가정이다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S8 ====== -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <span class="sec-num">§ 08</span>
+    <h2>Backward Induction의 성질과 한계</h2>
+  </div>
+
+  <div class="theorem-box">
+    <div class="thm-label">Properties of Backward Induction</div>
+    <ol class="step-list" style="margin-top:10px;">
+      <li>BI는 항상 정규형의 <strong>Nash Equilibrium</strong>을 도출하지만, 모든 NE가 BI에서 나오지는 않는다.</li>
+      <li><strong>완전 정보의 유한 게임</strong>은 항상 BI로 풀 수 있다.</li>
+      <li><strong>Generic 게임</strong>(모든 경로가 서로 다른 보수를 가지는 게임)에서 해는 <strong>유일(unique)</strong>하다.</li>
+    </ol>
+  </div>
+
+  <h3>BI를 적용할 수 없는 두 가지 경우</h3>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title" style="color:var(--red);">① 무한 수평선 게임</div>
+      <p style="font-size:13px;">Repeated Games처럼 종료 시점이 없으면 "마지막 단계"가 없어 BI 시작점이 없다.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--red);">② 불완전 정보 게임</div>
+      <p style="font-size:13px;">Non-singleton 정보집합이 있으면 어느 노드에 있는지 모르므로 단순 BI 적용 불가.</p>
+    </div>
+  </div>
+  <p>→ 이 경우들을 다루기 위해 <strong>SPNE (Subgame Perfect Nash Equilibrium)</strong>가 필요하다.</p>
+
+  <h3>BI의 한계 예시</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — BI와 SPNE의 차이</div>
+    <p>다음 게임에서 Player 1이 먼저 E(exit) 또는 X(enter)를 선택한다. X를 선택하면 Player 1과 2가 2×2 동시 게임을 한다.</p>
+    <div class="math">
+Player 1 선택:
+  E → (2, 6) 즉시 종료
+  X → 2×2 동시 게임 진행
+
+2×2 동시 게임 (X 선택 후):
+          L        R
+  T    (0, 1)   (3, 2)
+  B   (−1, 3)   (1, 5)
+
+BI 적용:
+  2×2 subgame의 NE: (T, R) → 보수 (3, 2)
+  Player 1: E → (2, 6), X+NE → (3, 2)
+  Player 1은 X를 선택 (3 > 2)
+  BI 결과: (ET, R) 즉 X를 선택 후 T, 그리고 Bob은 R
+    </div>
+  </div>
+</div>
+
+<!-- ====== S9 ====== -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <span class="sec-num">§ 09</span>
+    <h2>Subgame &amp; SPNE 정의</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Subgame (부분게임)</div>
+    <p>Extensive Form 게임의 일부로, 다음 세 조건을 모두 만족해야 한다:</p>
+    <ol class="step-list" style="margin-top:10px;">
+      <li>Subgame의 <strong>초기 노드는 singleton 정보집합</strong>에 속해야 한다</li>
+      <li>어떤 노드가 subgame에 속하면, <strong>그 후계 노드(successors)도 모두</strong> subgame에 속한다</li>
+      <li>정보집합의 어떤 노드가 subgame에 속하면, 그 <strong>정보집합의 모든 노드</strong>가 subgame에 속한다</li>
+    </ol>
+    <p style="margin-top:10px; font-size:14px; color:var(--muted);">게임 전체도 자기 자신의 subgame이다. 게임 전체 이외의 subgame을 <strong>proper subgame</strong>이라 한다.</p>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Subgame Perfect Nash Equilibrium (SPNE)</div>
+    <p>전략 프로파일이 SPNE이다 ⟺ 게임의 <strong>모든 subgame에서 Nash Equilibrium</strong>을 유도한다.</p>
+    <div class="math">
+SPNE ⊆ NE   (SPNE는 NE의 정련(refinement))
+
+유한 완전정보 게임에서: SPNE = Backward Induction 해
+무한/불완전정보 게임에서도 적용 가능
+    </div>
+  </div>
+
+  <h3>Subgame 개수 세기: 세 가지 예시</h3>
+  <div class="example-box">
+    <div class="ex-label">Subgame 개수 카운팅</div>
+    <table class="ct">
+      <thead><tr><th>게임</th><th>구조</th><th>Subgame 수</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Anne → Bob (c/d / e/f)</td>
+          <td>완전 정보, 2단계</td>
+          <td><span class="tag tg">3개</span></td>
+          <td>전체 게임 + Bob이 a 선택 후 + Bob이 b 선택 후</td>
+        </tr>
+        <tr>
+          <td>P1 → (T/B / E) + P2 동시</td>
+          <td>non-singleton IS 있음</td>
+          <td><span class="tag tb">2개</span></td>
+          <td>전체 게임 + E 이후 동시 게임 (T/B는 non-singleton이라 subgame 불가)</td>
+        </tr>
+        <tr>
+          <td>P1 → A/B/C/D → P2 동시</td>
+          <td>P2가 항상 non-singleton IS</td>
+          <td><span class="tag tp">1개</span></td>
+          <td>P2의 모든 노드가 같은 IS → proper subgame 없음, 전체 게임만</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====== S10 ====== -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <span class="sec-num">§ 10</span>
+    <h2>SPNE 계산 예시 (Step-by-Step)</h2>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-label">SPNE 찾기 — P1(E/X) + 2×2 동시 게임</div>
+    <p>Subgame이 2개인 게임. P1이 먼저 E(exit=2,6) 또는 X(enter)를 결정하고, X 선택 시 P1과 P2가 동시에 T/B, L/R을 선택한다.</p>
+
+    <h3 style="border-left-color:var(--accent2); color:var(--accent2);">Step 1: Subgame 2 (proper subgame) 분석</h3>
+    <div class="mx-wrap">
+      <table class="mx">
+        <tr><td class="plbl">P1 ↓ / P2 →</td><th>L</th><th>R</th></tr>
+        <tr><th>T</th><td>0, 1</td><td class="ne-cell">3, 2</td></tr>
+        <tr><th>B</th><td>−1, 3</td><td>1, 5</td></tr>
+      </table>
+    </div>
+    <p>Subgame 2의 NE: <span class="tag tg">(T, R)</span> → 보수 <span class="mi">(3, 2)</span></p>
+
+    <h3 style="border-left-color:var(--accent2); color:var(--accent2);">Step 2: Subgame 1 (전체 게임) 분석</h3>
+    <p>P1이 X를 선택하면 Subgame 2에서 NE (T,R)이 플레이됨을 안다 → P1의 X 선택 시 보수 = 3</p>
+    <p>P1이 E를 선택하면 보수 = 2</p>
+    <p>∴ P1은 X 선택 (3 > 2)</p>
+
+    <h3 style="border-left-color:var(--green); color:var(--green);">SPNE 결과</h3>
+    <div class="green-box">
+      <div class="green-label">✓ Unique SPNE</div>
+      <p><strong>(ET, R)</strong> — P1은 X를 선택하고, P1은 T를, P2는 R을 선택한다.</p>
+      <p style="font-size:13px; color:var(--muted); margin-top:6px;">전체 게임 NE: (XT, L), (XB, L), (ET, R) 세 개 중 SPNE는 (ET, R)만. (XT, L)과 (XB, L)은 subgame에서 NE를 유도하지 못해 제거됨.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S11 ====== -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <span class="sec-num">§ 11</span>
+    <h2>SPNE의 한계: Forward Induction</h2>
+  </div>
+
+  <p>SPNE도 완전한 해결책이 아닐 수 있다. 여러 SPNE가 존재할 때, 모두 동등하게 설득력 있는 것은 아니다.</p>
+
+  <h3>Battle of Partners with Outside Option</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — Putin &amp; Trump (BoS with outside option)</div>
+    <p>Putin이 먼저 Book(=outside option, 보수 2,2)을 선택하거나 Go out을 선택한다. Go out 선택 시 Trump와 BoS 게임을 한다.</p>
+    <div class="mx-wrap">
+      <table class="mx" style="margin-bottom:8px;">
+        <tr><td class="plbl">Putin(Go) ↓ / Trump →</td><th>Bach(B)</th><th>Stravinsky(S)</th></tr>
+        <tr><th>Bach(B)</th><td class="ne-cell">3, 1</td><td>0, 0</td></tr>
+        <tr><th>Stravinsky(S)</th><td>0, 0</td><td class="ne-cell">1, 3</td></tr>
+      </table>
+    </div>
+    <p>Subgame(BoS)의 NE: <span class="tag tb">(B, B)</span> 와 <span class="tag tb">(S, S)</span></p>
+    <p>전체 게임 SPNE:</p>
+    <ul class="sl">
+      <li><span class="tag tg">(GB, B)</span> — Putin: Go out 후 Bach; Trump: Bach → Putin 보수 3 > 2(Book) → Go out 선택 ✓</li>
+      <li><span class="tag tp">(BS, S)</span> — Putin: Book 후 Stravinsky; Trump: Stravinsky → Putin 보수 2(Book) ≥ 1(S,S) → Book 선택 ✓</li>
+    </ul>
+    <div class="warn-box" style="margin-top:12px;">
+      <div class="warn-label">⚠️ (BS, S)는 설득력이 없다</div>
+      <p>Trump가 BoS에서 플레이하게 되었다면, Putin이 Book(보수 2)을 포기하고 들어온 것이다.</p>
+      <p style="margin-top:6px;"><strong>"왜 Putin이 들어왔을까?"</strong> → Putin은 Book보다 더 좋은 결과를 기대하고 들어온 것 → Putin은 (B, B)의 3을 노리고 들어온 것 → Trump의 best response = B</p>
+      <p style="margin-top:6px;">→ (BS, S)는 Forward Induction에 위배된다.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Forward Induction (전진 귀납)</div>
+    <p>플레이어가 과거의 비평형 행동을 관찰할 때, 그 행동이 상대방에게 합리적이었다면 어떤 의도에서였는지를 추론한다. 즉 <strong>과거 행동을 신호(signal)로 이용</strong>하여 미래 전략을 업데이트한다.</p>
+    <p style="margin-top:8px; font-size:14px; color:var(--muted);">SPNE는 이러한 forward induction 추론을 포착하지 못하는 한계가 있다.</p>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-label">Example — Forward Induction 추론</div>
+    <div class="math">
+게임: Putin이 A(보수 3,0) 또는 B를 선택.
+      B 선택 시 Putin과 Trump가 동시 게임을 한다.
+
+        E     F     G
+  C  (2,2) (2,1) (0,0)
+  D  (1,1) (1,2) (4,0)
+
+SPNE: (C, E)가 동시 게임의 유일 NE → (BC, E)가 유일 SPNE
+
+Forward Induction:
+  Trump가 동시 게임에 진입했다면, Putin은 A(3,0)을 포기한 것.
+  Putin이 기대 보수 ≥ 3이 되려면 D를 선택해야 함 (D,G → 4 > 3)
+  따라서 Trump는 Putin이 D를 선택할 것으로 믿음
+  Trump의 best response = F (1,2)
+  Forward Induction 결과: (BD, F)
+    </div>
+  </div>
+</div>
+
+<!-- ====== S12 ====== -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <span class="sec-num">§ 12</span>
+    <h2>응용: Stackelberg Competition</h2>
+  </div>
+
+  <div class="example-box">
+    <div class="ex-label">Setup — Stackelberg Duopoly</div>
+    <ul class="sl">
+      <li>역수요 함수: <span class="mi">P(q₁, q₂) = a − (q₁ + q₂)</span></li>
+      <li>한계비용: <span class="mi">c > 0</span></li>
+      <li>Firm 1이 <strong>먼저</strong> q₁을 선택한다</li>
+      <li>Firm 2가 q₁을 <strong>관찰한 후</strong> q₂를 선택한다</li>
+    </ul>
+    <p>→ Extensive Form 게임: Firm 1 → Firm 2 순차 결정</p>
+  </div>
+
+  <h3>SPNE 계산: Backward Induction</h3>
+  <div class="math">
+【Step 1: Firm 2의 Best Response (임의의 q₁에 대해)】
+
+π₂(q₂ | q₁) = [(a − (q₁ + q₂)) − c] · q₂
+             = [(a − c) − q₁ − q₂] · q₂
+
+F.O.C.: (a − c) − q₁ − 2q₂ = 0
+
+q₂^BR(q₁) = (a − c − q₁) / 2   ← 이것이 Firm 2의 전략
+
+【Step 2: Firm 1의 최적화 (Firm 2의 BR을 알고)】
+
+π₁(q₁) = [(a − c) − q₁ − q₂^BR(q₁)] · q₁
+        = [(a − c) − q₁ − (a−c−q₁)/2] · q₁
+        = [(a − c)/2 − q₁/2] · q₁
+
+F.O.C.: (a − c)/2 − q₁ = 0
+
+q₁* = (a − c) / 2
+
+q₂* = q₂^BR(q₁*) = (a − c − (a−c)/2) / 2 = (a − c) / 4
+  </div>
+
+  <h3>Cournot vs Stackelberg 비교</h3>
+  <table class="ct">
+    <thead>
+      <tr><th>지표</th><th>Cournot (동시)</th><th>Stackelberg (순차)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>q₁*</strong></td><td>(a−c)/3</td><td class="ne-cell">(a−c)/2 ↑</td></tr>
+      <tr><td><strong>q₂*</strong></td><td>(a−c)/3</td><td>(a−c)/4 ↓</td></tr>
+      <tr><td><strong>총생산량 Q*</strong></td><td>2(a−c)/3</td><td class="ne-cell">3(a−c)/4 ↑</td></tr>
+      <tr><td><strong>π₁*</strong></td><td>(a−c)²/9</td><td class="ne-cell">(a−c)²/8 ↑</td></tr>
+      <tr><td><strong>π₂*</strong></td><td>(a−c)²/9</td><td>(a−c)²/16 ↓</td></tr>
+    </tbody>
+  </table>
+
+  <div class="key-box">
+    <div class="key-label">🔑 First-mover Advantage</div>
+    <ul class="sl">
+      <li>Firm 1(선도자)은 Cournot보다 <strong>더 많이 생산하고, 더 높은 이윤</strong>을 얻는다</li>
+      <li>Firm 2(추종자)는 Cournot보다 <strong>적게 생산하고, 낮은 이윤</strong>을 얻는다</li>
+      <li>총생산량은 Cournot보다 증가 → 소비자 잉여 증가</li>
+      <li>이는 Firm 1이 <strong>commitment(약속/공약) 효과</strong>를 활용하기 때문: q₁을 높게 고정하면 Firm 2는 반응함수에 따라 생산량을 줄일 수밖에 없다</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ====== SUMMARY ====== -->
+<div class="divider"></div>
+<div class="section">
+  <div class="section-header">
+    <span class="sec-num" style="background:rgba(200,168,75,0.1);border-color:rgba(200,168,75,0.2);color:var(--gold);">★</span>
+    <h2>시험 대비 핵심 요약</h2>
+  </div>
+
+  <table class="ct">
+    <thead><tr><th>개념</th><th>핵심 내용</th><th>시험 포인트</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Action vs Strategy</strong></td>
+        <td>Action = 특정 IS에서의 선택<br>Strategy = 모든 IS에서의 완전한 계획</td>
+        <td>전략 명시 시 모든 IS 포함 필수!</td>
+      </tr>
+      <tr>
+        <td><strong>Information Set</strong></td>
+        <td>플레이어가 구분 못하는 노드 묶음<br>Singleton IS = 완전 정보</td>
+        <td>Non-singleton IS의 경우 전략 수 계산</td>
+      </tr>
+      <tr>
+        <td><strong>Backward Induction</strong></td>
+        <td>끝에서부터 역방향으로 최적 행동 도출<br>유한 완전정보 게임에서 항상 가능</td>
+        <td>항상 NE 도출, generic 게임에서 유일</td>
+      </tr>
+      <tr>
+        <td><strong>CKSR vs CKR</strong></td>
+        <td>CKSR = 순차적 합리성의 공통지식<br>BI의 기반. CKR보다 강한 가정</td>
+        <td>Centipede game의 역설 설명</td>
+      </tr>
+      <tr>
+        <td><strong>Subgame</strong></td>
+        <td>① 초기노드 singleton IS<br>② successor 포함 ③ IS 온전히 포함</td>
+        <td>subgame 개수 세는 문제 빈출!</td>
+      </tr>
+      <tr>
+        <td><strong>SPNE</strong></td>
+        <td>모든 subgame에서 NE를 유도<br>비신뢰적 위협 제거</td>
+        <td>유한완전정보 = BI해, 더 넓게 적용 가능</td>
+      </tr>
+      <tr>
+        <td><strong>Forward Induction</strong></td>
+        <td>과거 행동에서 미래 의도 추론<br>SPNE가 포착 못하는 신호 효과</td>
+        <td>SPNE의 한계 설명에 활용</td>
+      </tr>
+      <tr>
+        <td><strong>Stackelberg</strong></td>
+        <td>q₁* = (a−c)/2, q₂* = (a−c)/4<br>First-mover advantage</td>
+        <td>Cournot(1/3, 1/3)과 비교 필수</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box" style="margin-top:24px;">
+    <div class="warn-label">⚠️ 자주 틀리는 포인트</div>
+    <ul class="sl">
+      <li>전략 명시 시 <strong>실제로 도달하지 않는 IS도</strong> 행동을 써야 함 (e.g. "ET"가 아니라 전략을 모두 명시)</li>
+      <li>Non-singleton IS가 있으면 그 노드에서 시작하는 <strong>proper subgame 없음</strong></li>
+      <li>SPNE는 <strong>NE의 부분집합</strong> — 모든 SPNE는 NE이지만 역은 성립하지 않음</li>
+      <li>Stackelberg에서 Firm 2의 전략은 <strong>q₁의 함수</strong>인 BR 함수 전체: <span class="mi">q₂^BR(q₁) = (a−c−q₁)/2</span></li>
+      <li>BI = CKSR이지 CKR이 아님 (Centipede game에서 둘의 차이가 중요)</li>
+    </ul>
+  </div>
+
+  <div class="two-col" style="margin-top:24px;">
+    <a href="../lecture2/index.html" style="text-decoration:none;">
+      <div class="card" style="cursor:pointer; transition:border-color 0.2s;" onmouseover="this.style.borderColor='#2e3d58'" onmouseout="this.style.borderColor='#243045'">
+        <div class="card-title" style="color:var(--muted);">← LN 02: Strategic Form</div>
+        <p style="font-size:13px;color:var(--muted);">Nash Equilibrium · Mixed Strategies · Cournot</p>
+      </div>
+    </a>
+    <a href="../index.html" style="text-decoration:none;">
+      <div class="card" style="cursor:pointer; border-color:rgba(91,156,246,0.25); transition:border-color 0.2s;" onmouseover="this.style.borderColor='#5b9cf6'" onmouseout="this.style.borderColor='rgba(91,156,246,0.25)'">
+        <div class="card-title" style="color:var(--accent2);">목차로 돌아가기 →</div>
+        <p style="font-size:13px;color:var(--muted);">모든 강의노트 목록</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+</main>
+<a href="#" class="back-top">↑ TOP</a>
+</body>
+</html>
