@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Theory — Study Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #080c10;
+    --bg2:       #0d1219;
+    --surface:   #111820;
+    --surface2:  #16202c;
+    --border:    #1e2d3d;
+    --border2:   #243547;
+    --text:      #d4dde8;
+    --muted:     #5a7a94;
+    --accent:    #4fa3d1;
+    --accent2:   #7ec8e8;
+    --gold:      #c8a84b;
+    --gold2:     #e8c96a;
+    --green:     #3db87a;
+    --dim:       #8faec4;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,163,209,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,163,209,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: rgba(79,163,209,0.06);
+    top: -200px; right: -100px;
+  }
+  .orb-2 {
+    width: 400px; height: 400px;
+    background: rgba(200,168,75,0.05);
+    bottom: -150px; left: -100px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 72px 48px 64px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .header-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .eyebrow-line {
+    height: 1px;
+    width: 40px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+  .eyebrow-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 700;
+    line-height: 1.0;
+    color: #fff;
+    margin-bottom: 10px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .header-title em {
+    font-style: italic;
+    color: var(--accent2);
+  }
+
+  .header-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--muted);
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .meta-chip {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    color: var(--dim);
+    background: var(--surface);
+  }
+  .meta-chip.active {
+    border-color: rgba(79,163,209,0.35);
+    background: rgba(79,163,209,0.06);
+    color: var(--accent2);
+  }
+
+  /* ── DIVIDER ── */
+  .rule {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 48px;
+    position: relative;
+    z-index: 1;
+  }
+  .rule hr {
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 48px 80px;
+  }
+
+  /* ── LECTURE GRID ── */
+  .lecture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 20px;
+    margin-bottom: 64px;
+  }
+
+  /* ── LECTURE CARD ── */
+  .lecture-card {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  .lecture-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,163,209,0.04) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .lecture-card:hover {
+    border-color: var(--border2);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(79,163,209,0.1);
+  }
+  .lecture-card:hover::before { opacity: 1; }
+
+  /* available vs coming */
+  .lecture-card.available { cursor: pointer; }
+  .lecture-card.coming {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* accent bar top */
+  .card-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .lecture-card:hover .card-bar { opacity: 1; }
+  .lecture-card.available .card-bar { opacity: 0.4; }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .card-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(79,163,209,0.1);
+    border: 1px solid rgba(79,163,209,0.2);
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+
+  .card-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+  .status-done {
+    color: var(--green);
+    background: rgba(61,184,122,0.1);
+    border: 1px solid rgba(61,184,122,0.2);
+  }
+  .status-wip {
+    color: var(--gold);
+    background: rgba(200,168,75,0.1);
+    border: 1px solid rgba(200,168,75,0.2);
+  }
+  .status-todo {
+    color: var(--muted);
+    background: rgba(90,122,148,0.1);
+    border: 1px solid rgba(90,122,148,0.2);
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 18px;
+  }
+
+  .card-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .topic-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .card-pages {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .card-arrow {
+    font-size: 18px;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .lecture-card:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .lecture-card.available .card-arrow { opacity: 0.3; }
+
+  /* ── QUICK REFERENCE ── */
+  .quick-ref {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+  .quick-ref-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold2);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .quick-ref-title::before {
+    content: '★';
+    font-size: 14px;
+    color: var(--gold);
+  }
+
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .ref-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: border-color 0.2s;
+  }
+  .ref-item:hover { border-color: var(--border2); }
+  .ref-formula {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .ref-label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 48px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  footer p {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+  .footer-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .lecture-card:nth-child(1) { animation-delay: 0.05s; }
+  .lecture-card:nth-child(2) { animation-delay: 0.12s; }
+  .lecture-card:nth-child(3) { animation-delay: 0.19s; }
+  .lecture-card:nth-child(4) { animation-delay: 0.26s; }
+  .lecture-card:nth-child(5) { animation-delay: 0.33s; }
+  .lecture-card:nth-child(6) { animation-delay: 0.40s; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 33%;   /* 1/3 lectures done — update as you add notes */
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+  .progress-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    header, main, footer { padding-left: 20px; padding-right: 20px; }
+    .lecture-grid { grid-template-columns: 1fr; }
+    .ref-grid { grid-template-columns: 1fr 1fr; }
+    .header-title { font-size: 2.6rem; }
+    footer { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-eyebrow">
+    <div class="eyebrow-line"></div>
+    <span class="eyebrow-text">Graduate Microeconomics II · SKKU · Spring 2024</span>
+  </div>
+  <h1 class="header-title">Game<br><em>Theory</em></h1>
+  <p class="header-subtitle">Instructor: Keeyoung Rhee &nbsp;·&nbsp; 시험 대비 강의노트 모음</p>
+  <div class="header-meta">
+    <span class="meta-chip active">Strategic Form</span>
+    <span class="meta-chip active">Nash Equilibrium</span>
+    <span class="meta-chip active">Mixed Strategies</span>
+    <span class="meta-chip">Extensive Form</span>
+    <span class="meta-chip">Repeated Games</span>
+    <span class="meta-chip">Bayesian Games</span>
+  </div>
+</header>
+
+<div class="rule"><hr></div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- Progress -->
+  <div class="progress-row">
+    <span class="progress-label">PROGRESS</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-count" id="progressCount">1 / 3 완료</span>
+  </div>
+
+  <!-- Lectures -->
+  <div class="section-label">강의 노트</div>
+
+  <div class="lecture-grid">
+
+    <!-- LN 1 -->
+    <a class="lecture-card coming" href="lecture1/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 01</span>
+        <span class="card-status status-todo">준비 중</span>
+      </div>
+      <div class="card-title">Introduction &amp; Decision Theory</div>
+      <p class="card-desc">게임이론의 기초, 합리성 가정, 기대효용 이론 복습.</p>
+      <div class="card-topics">
+        <span class="topic-tag">Rationality</span>
+        <span class="topic-tag">Expected Utility</span>
+        <span class="topic-tag">Risk Aversion</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">— 슬라이드 미업로드</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- LN 2 ← DONE -->
+    <a class="lecture-card available" href="lecture2/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 02</span>
+        <span class="card-status status-done">완료 ✓</span>
+      </div>
+      <div class="card-title">Strategic-Form Games</div>
+      <p class="card-desc">동시 게임의 수학적 구조, 지배전략, Nash 균형, 혼합전략, 응용 모델 전반.</p>
+      <div class="card-topics">
+        <span class="topic-tag">Nash Equilibrium</span>
+        <span class="topic-tag">IDSDS</span>
+        <span class="topic-tag">Mixed Strategies</span>
+        <span class="topic-tag">Cournot</span>
+        <span class="topic-tag">Bertrand</span>
+        <span class="topic-tag">THPE</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">59 슬라이드 · 15개 섹션</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- LN 3 -->
+    <a class="lecture-card coming" href="lecture3/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 03</span>
+        <span class="card-status status-todo">준비 중</span>
+      </div>
+      <div class="card-title">Extensive-Form Games</div>
+      <p class="card-desc">순차 게임, 부분게임 완전균형, 역진귀납법.</p>
+      <div class="card-topics">
+        <span class="topic-tag">Backward Induction</span>
+        <span class="topic-tag">SPE</span>
+        <span class="topic-tag">Information Sets</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">— 슬라이드 미업로드</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- LN 4 placeholder -->
+    <a class="lecture-card coming" href="lecture4/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 04</span>
+        <span class="card-status status-todo">준비 중</span>
+      </div>
+      <div class="card-title">Repeated Games</div>
+      <p class="card-desc">무한 반복 게임, 협력의 지속 조건, Folk Theorem.</p>
+      <div class="card-topics">
+        <span class="topic-tag">Folk Theorem</span>
+        <span class="topic-tag">Grim Trigger</span>
+        <span class="topic-tag">Discount Factor</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">— 슬라이드 미업로드</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- LN 5 placeholder -->
+    <a class="lecture-card coming" href="lecture5/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 05</span>
+        <span class="card-status status-todo">준비 중</span>
+      </div>
+      <div class="card-title">Bayesian Games</div>
+      <p class="card-desc">불완전 정보 게임, Bayesian Nash Equilibrium, 경매 이론.</p>
+      <div class="card-topics">
+        <span class="topic-tag">Incomplete Info</span>
+        <span class="topic-tag">BNE</span>
+        <span class="topic-tag">Auctions</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">— 슬라이드 미업로드</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- LN 6 placeholder -->
+    <a class="lecture-card coming" href="lecture6/index.html">
+      <div class="card-bar"></div>
+      <div class="card-header">
+        <span class="card-num">LN 06</span>
+        <span class="card-status status-todo">준비 중</span>
+      </div>
+      <div class="card-title">Mechanism Design</div>
+      <p class="card-desc">사회선택, 인센티브 호환, Revelation Principle.</p>
+      <div class="card-topics">
+        <span class="topic-tag">IC Constraints</span>
+        <span class="topic-tag">VCG</span>
+        <span class="topic-tag">Revelation</span>
+      </div>
+      <div class="card-footer">
+        <span class="card-pages">— 슬라이드 미업로드</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Quick Reference -->
+  <div class="section-label">핵심 공식 퀵 레퍼런스</div>
+
+  <div class="quick-ref">
+    <div class="quick-ref-title">Lecture 2 — 자주 쓰는 공식</div>
+    <div class="ref-grid">
+      <div class="ref-item">
+        <div class="ref-formula">q* = (a−c) / 3</div>
+        <div class="ref-label">Cournot Duopoly NE</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">p* = c</div>
+        <div class="ref-label">Bertrand NE</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">BRᵢ(q₋ᵢ) = (a−c−q₋ᵢ)/2</div>
+        <div class="ref-label">Cournot Best Response</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">BRᵢ(p₋ᵢ) = (p₋ᵢ + 1)/2</div>
+        <div class="ref-label">Hotelling Best Response</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">p* = 1,  x* = 1/2</div>
+        <div class="ref-label">Hotelling NE (s≥1.5)</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">s* = 1/2</div>
+        <div class="ref-label">Median Voter NE</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">#NE = 홀수 (a.e.)</div>
+        <div class="ref-label">Wilson–Harsanyi Theorem</div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-formula">σᵢ* ∈ BRᵢ(σ*₋ᵢ)  ∀i</div>
+        <div class="ref-label">MSNE Condition</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>Keeyoung Rhee · SKKU Graduate Microeconomics II · Spring 2024</p>
+  <div class="footer-links">
+    <a href="lecture2/index.html">LN 02 →</a>
+  </div>
+</footer>
+
+<script>
+  // Dynamically count done cards and update progress
+  const cards = document.querySelectorAll('.lecture-card');
+  const total = cards.length;
+  const done  = document.querySelectorAll('.status-done').length;
+  const pct   = Math.round((done / total) * 100);
+
+  document.getElementById('progressFill').style.width  = pct + '%';
+  document.getElementById('progressCount').textContent = done + ' / ' + total + ' 완료';
+</script>
+
+</body>
+</html>
