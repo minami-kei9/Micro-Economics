@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture Note 1 | Introduction to Game Theory</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,600&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0b0f0a;
+    --bg2:      #111510;
+    --surface:  #161c14;
+    --surface2: #1b231a;
+    --surface3: #1f2a1d;
+    --border:   #2a3828;
+    --border2:  #354a32;
+    --text:     #dde8d8;
+    --muted:    #6b8a64;
+    --accent:   #6fc45a;
+    --accent2:  #96d986;
+    --gold:     #c8a84b;
+    --gold2:    #e8c96a;
+    --red:      #e05252;
+    --blue:     #5aade0;
+    --purple:   #b07de0;
+    --orange:   #e09450;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 1;
+    background: linear-gradient(160deg, #0f1a0d 0%, #111510 60%, #0b0f0a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 48px 56px;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; right: -60px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(111,196,90,0.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative; z-index: 1;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(111,196,90,0.25);
+    background: rgba(111,196,90,0.06);
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 22px;
+  }
+  .header-badge::before { content: '◆'; font-size: 8px; }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  h1 .hl { color: var(--accent2); font-style: italic; font-weight: 700; }
+  .header-sub {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 28px;
+  }
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .nav-back {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 5px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); border-color: var(--border2); }
+  .nav-sep { color: var(--border2); }
+  .nav-curr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* ── TOC ── */
+  .toc-wrap {
+    max-width: 960px;
+    margin: 36px auto;
+    padding: 0 48px;
+    position: relative; z-index: 1;
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .toc-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 6px;
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13.5px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .toc-item:hover { background: var(--surface2); color: var(--accent2); }
+  .toc-n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    min-width: 20px;
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 48px 80px;
+    position: relative; z-index: 1;
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 60px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sec-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(111,196,90,0.1);
+    border: 1px solid rgba(111,196,90,0.2);
+    padding: 3px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--gold2);
+    margin: 26px 0 12px;
+    padding-left: 14px;
+    border-left: 3px solid var(--gold);
+  }
+  p { margin-bottom: 12px; font-size: 15px; }
+
+  /* ── BOXES ── */
+  .def-box {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .def-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .example-box {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 18px 0;
+  }
+  .ex-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+  .insight {
+    background: rgba(176,125,224,0.06);
+    border: 1px solid rgba(176,125,224,0.2);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .insight-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 8px;
+  }
+  .warn-box {
+    background: rgba(224,82,82,0.06);
+    border-left: 3px solid var(--red);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin: 18px 0;
+  }
+  .warn-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 6px;
+  }
+  .key-box {
+    background: rgba(200,168,75,0.06);
+    border: 1px solid rgba(200,168,75,0.22);
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 18px 0;
+  }
+  .key-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  /* ── STYLED LIST ── */
+  .sl { list-style: none; padding-left: 4px; }
+  .sl li {
+    padding: 4px 0 4px 22px;
+    position: relative;
+    font-size: 15px;
+  }
+  .sl li::before {
+    content: '▸';
+    position: absolute; left: 0; top: 7px;
+    color: var(--accent); font-size: 11px;
+  }
+  .sl li.indent { padding-left: 40px; }
+  .sl li.indent::before { left: 18px; color: var(--muted); }
+
+  /* ── PAYOFF MATRIX ── */
+  .mx-wrap { overflow-x: auto; margin: 16px 0; }
+  .mx {
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .mx th, .mx td {
+    border: 1px solid var(--border);
+    padding: 9px 18px;
+    text-align: center;
+    min-width: 80px;
+  }
+  .mx th { background: var(--surface2); color: var(--accent2); }
+  .mx td { background: var(--surface3); }
+  .mx .plbl { background: transparent; border: none; color: var(--muted); font-size: 11px; }
+
+  /* ── COMPARISON TABLE ── */
+  .ct {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0;
+  }
+  .ct th {
+    background: var(--surface2);
+    color: var(--accent2);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border);
+  }
+  .ct td {
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(42,56,40,0.5);
+    vertical-align: top;
+  }
+  .ct tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* ── TWO COL ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold2);
+    margin-bottom: 10px;
+  }
+
+  /* ── GAME TREE ── */
+  .tree-svg-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .tree-svg-wrap svg text { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── MATH ── */
+  .math {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--accent2);
+    overflow-x: auto;
+  }
+  .mi {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(111,196,90,0.08);
+    color: var(--accent2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 93%;
+  }
+
+  /* ── TAG ── */
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 9px;
+    border-radius: 10px;
+    margin: 2px 3px;
+  }
+  .tg { background: rgba(111,196,90,0.12); color: var(--accent2); border: 1px solid rgba(111,196,90,0.25); }
+  .tb { background: rgba(90,173,224,0.12); color: var(--blue); border: 1px solid rgba(90,173,224,0.25); }
+  .tp { background: rgba(176,125,224,0.12); color: var(--purple); border: 1px solid rgba(176,125,224,0.25); }
+  .to { background: rgba(224,148,80,0.12); color: var(--orange); border: 1px solid rgba(224,148,80,0.25); }
+  .tr { background: rgba(224,82,82,0.12); color: var(--red); border: 1px solid rgba(224,82,82,0.25); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* ── STEP LIST ── */
+  .step-list { list-style: none; counter-reset: s; }
+  .step-list li {
+    counter-increment: s;
+    padding: 10px 0 10px 50px;
+    position: relative;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(42,56,40,0.4);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-list li::before {
+    content: counter(s);
+    position: absolute; left: 0; top: 8px;
+    width: 28px; height: 28px;
+    background: rgba(111,196,90,0.12);
+    border: 1px solid rgba(111,196,90,0.25);
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 600;
+  }
+
+  /* ── BACK TO TOP ── */
+  .back-top {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    transition: all 0.2s;
+    z-index: 99;
+  }
+  .back-top:hover { color: var(--accent); border-color: var(--border2); }
+
+  @media (max-width: 640px) {
+    header, .toc-wrap, main { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="header-badge">Lecture Note 01 · Introduction</div>
+    <h1>Game Theory:<br><span class="hl">Introduction</span></h1>
+    <p class="header-sub">Keeyoung Rhee · Sungkyunkwan University (SKKU) · Spring 2025</p>
+    <div class="header-nav">
+      <a class="nav-back" href="../index.html">← 목차로</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-curr">LN 01 — Introduction</span>
+      <a class="nav-back" href="../lecture2/index.html">LN 02 Strategic Form →</a>
+    </div>
+  </div>
+</header>
+
+<!-- TOC -->
+<div class="toc-wrap">
+  <div class="toc">
+    <div class="toc-title">📚 목차</div>
+    <div class="toc-list">
+      <a class="toc-item" href="#s1"><span class="toc-n">01</span>왜 게임이론인가?</a>
+      <a class="toc-item" href="#s2"><span class="toc-n">02</span>실제 응용 사례들</a>
+      <a class="toc-item" href="#s3"><span class="toc-n">03</span>강의 계획</a>
+      <a class="toc-item" href="#s4"><span class="toc-n">04</span>대표 게임 예시</a>
+      <a class="toc-item" href="#s5"><span class="toc-n">05</span>협력 vs 비협력 게임이론</a>
+      <a class="toc-item" href="#s6"><span class="toc-n">06</span>비협력 게임의 구조</a>
+      <a class="toc-item" href="#s7"><span class="toc-n">07</span>게임의 두 가지 표현 형식</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ============================== S1 ============================== -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <span class="sec-num">§ 01</span>
+    <h2>왜 게임이론인가?</h2>
+  </div>
+
+  <p>기존 경제학 과목에서는 개인이 독립적으로 의사결정을 내리는 최적화(optimization) 문제를 주로 다뤘다. 시장균형, 장기균형 같은 분석 도구가 그 예다.</p>
+
+  <div class="warn-box">
+    <div class="warn-label">⚠️ 기존 도구의 한계</div>
+    <p>경제 주체들이 <strong>서로 직접 또는 간접적으로 상호작용</strong>할 때, 단순한 최적화만으로는 분석할 수 없다.</p>
+  </div>
+
+  <h3>전략적 상황의 예시들</h3>
+  <ul class="sl">
+    <li>eBay에서 동일한 물건에 두 사람이 입찰하는 상황</li>
+    <li>두 사람이 공동 프로젝트를 함께 수행하는 상황</li>
+    <li>두 장군이 군대 배치를 결정하는 상황</li>
+    <li>두 기업이 유사한 제품의 가격을 설정하는 상황</li>
+  </ul>
+
+  <div class="key-box">
+    <div class="key-label">🔑 핵심 특성 (Key Feature)</div>
+    <p>각 참여자의 <strong>결과(outcome)는 자신의 행동뿐만 아니라 상대방의 행동에도 의존</strong>한다.</p>
+    <div class="math">
+결과(i) = f(자신의 행동, 상대방의 행동)
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">💡 최적화의 한계</div>
+    <p>입찰자 1의 최적 입찰가는 입찰자 2의 입찰가에 달려 있고, 입찰자 2의 최적 입찰가는 입찰자 1의 입찰가에 달려 있다. 이 두 문제를 <strong>함께(simultaneously)</strong> 풀어야 하는 것이 바로 게임이론의 출발점이다.</p>
+  </div>
+</div>
+
+<!-- ============================== S2 ============================== -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <span class="sec-num">§ 02</span>
+    <h2>실제 응용 사례들</h2>
+  </div>
+
+  <p>게임이론은 이론에만 머무르지 않는다. 다양한 현실 문제에 성공적으로 적용된 <strong>미시경제학의 가장 큰 이론·실무적 성공 사례</strong> 중 하나다.</p>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📡 스펙트럼 경매</div>
+      <p style="font-size:13px;">통신사들의 주파수 대역 입찰. 게임이론 설계 덕분에 효율적 배분 실현.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🏥 신장 교환 프로그램</div>
+      <p style="font-size:13px;">매칭 이론(Matching Theory)으로 최적의 신장 기증자-수혜자 매칭 설계.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🏫 학교 선택</div>
+      <p style="font-size:13px;">학생과 학교의 선호를 반영한 배정 메커니즘 설계 (Boston, Deferred Acceptance).</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🏛️ 정치 플랫폼</div>
+      <p style="font-size:13px;">후보자들의 정책 위치 결정 (→ LN2의 Median Voter Theorem).</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">💰 금융 위기 분석</div>
+      <p style="font-size:13px;">뱅크런, 시스템 위기, 규제 설계에 게임이론 활용.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">⚔️ 전쟁·갈등</div>
+      <p style="font-size:13px;">핵억지력, 협상, 군비경쟁의 전략적 분석.</p>
+    </div>
+  </div>
+
+  <h3>Bank Runs: Diamond &amp; Dybvig (1983)</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — 뱅크런 게임</div>
+    <ul class="sl">
+      <li>100명의 예금자가 각각 $1씩 은행에 예금</li>
+      <li>은행은 $90을 투자에 사용, $10을 준비금으로 유지</li>
+      <li class="indent">만기까지 보유 시: $110 수익</li>
+      <li class="indent">만기 이전 인출 시: $5만 회수</li>
+      <li>예금자들이 "은행이 투자에서 손실을 볼 것"이라 믿는다고 가정</li>
+    </ul>
+    <div class="math">
+10명 이하 인출  →  은행 정상 운영 (채무불이행 없음)
+10명 초과 인출  →  은행 파산 (채무불이행 발생)
+    </div>
+    <div class="insight" style="margin-top:12px;">
+      <div class="insight-label">💡 전략적 분석</div>
+      <p>각 예금자의 최적 행동은 <strong>다른 예금자들이 어떻게 행동하느냐</strong>에 달려 있다. 모두가 인출할 것이라 믿으면 나도 인출해야 최적 — <em>자기실현적 위기(self-fulfilling crisis)</em>의 전형적 예시. 이것이 바로 게임이론이 필요한 이유다.</p>
+    </div>
+  </div>
+
+  <h3>US-USSR 핵 군비경쟁</h3>
+  <div class="example-box">
+    <div class="ex-label">Example — 핵 억지력 (Nuclear Deterrence)</div>
+    <ul class="sl">
+      <li><strong>MAD (Mutual Assured Destruction)</strong>: 어느 한 쪽이 핵공격을 감행하면 양측 모두 전멸</li>
+      <li>Second-strike capability (2차 보복 능력) 유지 → 상대방의 선제공격 억제</li>
+      <li>역설: 평화는 상호 파멸 위협 위에서만 유지됨</li>
+      <li>기술·수적 우위 경쟁 → 군비경쟁의 지속</li>
+    </ul>
+    <div class="key-box" style="margin-top:12px;">
+      <div class="key-label">🔑 게임이론적 해석</div>
+      <p>이 상황은 전형적인 <span class="tag tg">Prisoner's Dilemma</span> 구조다. 군비 축소가 양측 모두에게 유리하지만, 상대가 군비를 유지하는 한 나도 군비를 유지하는 것이 지배전략이다.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== S3 ============================== -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <span class="sec-num">§ 03</span>
+    <h2>강의 계획 (Course Outline)</h2>
+  </div>
+
+  <ol class="step-list">
+    <li>
+      <strong>Strategic-Form Games</strong> (정규형 게임) <span class="tag tg">LN 02</span><br>
+      <span style="font-size:13px;color:var(--muted);">동시 게임, Nash Equilibrium, 혼합전략, Cournot/Bertrand/Hotelling</span>
+    </li>
+    <li>
+      <strong>Extensive-Form Games</strong> (전개형 게임) <span class="tag tb">LN 03</span><br>
+      <span style="font-size:13px;color:var(--muted);">순차 게임, Backward Induction, Subgame Perfect Equilibrium</span>
+    </li>
+    <li>
+      <strong>Repeated Games</strong> (반복 게임) <span class="tag tp">LN 04</span><br>
+      <span style="font-size:13px;color:var(--muted);">무한 반복, Folk Theorem, 협력의 조건</span>
+    </li>
+    <li>
+      <strong>Games of Imperfect &amp; Incomplete Information</strong> <span class="tag to">LN 05</span><br>
+      <span style="font-size:13px;color:var(--muted);">Bayesian Nash Equilibrium, 경매 이론, 신호 게임</span>
+    </li>
+    <li>
+      <strong>Extra Topics</strong> (허용 시) <span class="tag tr">LN 06+</span><br>
+      <span style="font-size:13px;color:var(--muted);">Mechanism Design, Matching Theory, 등</span>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== S4 ============================== -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <span class="sec-num">§ 04</span>
+    <h2>대표 게임 예시</h2>
+  </div>
+
+  <h3>Matching Pennies (동전 맞추기)</h3>
+  <div class="mx-wrap">
+    <table class="mx">
+      <tr>
+        <td class="plbl">Anne ↓ / Bob →</td>
+        <th>H</th><th>T</th>
+      </tr>
+      <tr><th>H</th><td>+1, −1</td><td>−1, +1</td></tr>
+      <tr><th>T</th><td>−1, +1</td><td>+1, −1</td></tr>
+    </table>
+  </div>
+  <ul class="sl">
+    <li>Anne과 Bob이 각자 동전을 내밀어 앞면(H)/뒷면(T)을 선택</li>
+    <li>동전이 <strong>같으면</strong>: Bob이 Anne에게 $1 지불</li>
+    <li>동전이 <strong>다르면</strong>: Anne이 Bob에게 $1 지불</li>
+  </ul>
+  <div class="insight">
+    <div class="insight-label">💡 특성</div>
+    <p><span class="tag tr">Zero-sum game</span> — 한 사람의 이득이 정확히 상대방의 손실. 순수전략 Nash Equilibrium이 존재하지 않으며, 혼합전략 NE만 존재한다. (→ LN2에서 자세히)</p>
+    <p style="margin-top:6px;">다른 응용: 축구 페널티킥, 야구 투구, 전술적 군사 결정 등</p>
+  </div>
+
+  <h3>Prisoner's Dilemma (죄수의 딜레마)</h3>
+  <div class="mx-wrap">
+    <table class="mx">
+      <tr>
+        <td class="plbl">Anne ↓ / Bob →</td>
+        <th>Confess</th><th>Don't Confess</th>
+      </tr>
+      <tr><th>Confess</th><td>−6, −6</td><td>0, −9</td></tr>
+      <tr><th>Don't Confess</th><td>−9, 0</td><td>−1, −1</td></tr>
+    </table>
+  </div>
+  <p>게임이론에서 가장 유명한 게임. 두 명의 용의자가 자백 여부를 결정하는 상황.</p>
+  <div class="key-box">
+    <div class="key-label">🔑 핵심 역설</div>
+    <p>두 플레이어 모두 <strong>Confess가 지배전략</strong>이지만, 결과는 (−6, −6)로 협력했을 때의 (−1, −1)보다 훨씬 나쁘다. <strong>개인 합리성 ≠ 집단 합리성</strong>의 대표적 예시.</p>
+    <p style="margin-top:8px;">실제 응용: 가격 경쟁, 군비경쟁, 공유지의 비극, 환경 오염 등</p>
+  </div>
+</div>
+
+<!-- ============================== S5 ============================== -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <span class="sec-num">§ 05</span>
+    <h2>협력 vs 비협력 게임이론</h2>
+  </div>
+
+  <table class="ct">
+    <thead>
+      <tr>
+        <th>구분</th>
+        <th>Cooperative Game Theory</th>
+        <th>Non-cooperative Game Theory</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>초점</strong></td>
+        <td>플레이어 연합(coalition)이 무엇을 달성할 수 있는가</td>
+        <td>개별 플레이어의 전략적 행동</td>
+      </tr>
+      <tr>
+        <td><strong>가정</strong></td>
+        <td>구속력 있는 합의(binding agreements) 가능</td>
+        <td>구속력 있는 합의 불가능</td>
+      </tr>
+      <tr>
+        <td><strong>강조점</strong></td>
+        <td>집단적 합리성</td>
+        <td>개인적 합리성 (individualistic)</td>
+      </tr>
+      <tr>
+        <td><strong>창시자</strong></td>
+        <td>von Neumann &amp; Morgenstern</td>
+        <td><strong>John Nash</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="def-box">
+    <div class="def-label">이 강의의 범위</div>
+    <p>본 강의는 <strong>비협력 게임이론(Non-cooperative Game Theory)에만</strong> 한정한다.</p>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">💡 John Nash (1928–2015)</div>
+    <p>프린스턴 대학의 수학자. 비협력 게임의 균형 개념인 <strong>Nash Equilibrium</strong>을 1950년 박사논문에서 제시했다. 이 업적으로 1994년 노벨 경제학상을 수상. 영화 &lt;뷰티풀 마인드(A Beautiful Mind)&gt;의 실제 주인공.</p>
+  </div>
+</div>
+
+<!-- ============================== S6 ============================== -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <span class="sec-num">§ 06</span>
+    <h2>비협력 게임의 구조</h2>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition — Non-cooperative Game의 3요소</div>
+    <ol class="step-list" style="margin-top:10px;">
+      <li><strong>Players (플레이어)</strong> — 게임에 참여하는 의사결정 주체들의 집합</li>
+      <li><strong>Strategies (전략)</strong> — 각 플레이어가 선택 가능한 행동들의 집합</li>
+      <li><strong>Payoffs (보수)</strong> — 모든 전략 조합에 대해 각 플레이어가 받는 보수</li>
+    </ol>
+  </div>
+
+  <h3>해석 방식</h3>
+  <ul class="sl">
+    <li>각 플레이어는 <strong>독립적으로(independently)</strong> 가능한 전략을 선택한다</li>
+    <li>보수는 자신의 전략 <strong>AND</strong> 다른 플레이어들의 전략 모두에 의존한다</li>
+  </ul>
+
+  <div class="key-box">
+    <div class="key-label">🔑 LN2와의 연결</div>
+    <p>이 3요소가 LN2에서 수학적으로 정형화된다:</p>
+    <div class="math">
+G = {(S₁, u₁), ..., (Sₙ, uₙ)}
+
+N  = {1,...,n}     : 플레이어 집합
+Sᵢ                : 플레이어 i의 전략 공간
+uᵢ : ∏Sₖ → ℝ    : 플레이어 i의 보수 함수
+    </div>
+  </div>
+</div>
+
+<!-- ============================== S7 ============================== -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <span class="sec-num">§ 07</span>
+    <h2>게임의 두 가지 표현 형식</h2>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">1. Strategic Form (정규형)</div>
+      <ul class="sl" style="font-size:13.5px;">
+        <li>타이밍을 명시적으로 나타내지 않음</li>
+        <li>플레이어들이 <strong>동시에</strong> 단일 행동을 선택</li>
+        <li>혹은 전체 전략 플랜을 하나의 전략으로 표현</li>
+        <li>행렬(matrix) 형태로 표현 가능</li>
+      </ul>
+      <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);">→ LN 02에서 집중 분석</div>
+    </div>
+    <div class="card">
+      <div class="card-title">2. Extensive Form (전개형)</div>
+      <ul class="sl" style="font-size:13.5px;">
+        <li>행동의 <strong>타이밍을 명시적</strong>으로 표현</li>
+        <li>게임 트리(game tree)로 정의</li>
+        <li>순차적 의사결정 구조 포착</li>
+        <li>정보 집합(information sets) 포함 가능</li>
+      </ul>
+      <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);">→ LN 03에서 집중 분석</div>
+    </div>
+  </div>
+
+  <h3>Strategic Form 예시 (4×4 행렬)</h3>
+  <div class="mx-wrap">
+    <table class="mx">
+      <tr>
+        <td class="plbl">Anne ↓ / Bob →</td>
+        <th>C,C</th><th>C,D</th><th>D,C</th><th>D,D</th>
+      </tr>
+      <tr><th>A</th><td>5, 3</td><td>5, 3</td><td>0, 0</td><td>0, 0</td></tr>
+      <tr><th>B</th><td>0, 0</td><td>3, 5</td><td>0, 0</td><td>3, 5</td></tr>
+    </table>
+  </div>
+  <p style="font-size:13px; color:var(--muted);">Bob의 전략이 C,C / C,D / D,C / D,D로 표현된 것 — 각 전략은 상황에 따른 전체 행동 플랜(contingent plan)이다.</p>
+
+  <h3>Extensive Form 예시 (Game Tree)</h3>
+  <div class="tree-svg-wrap">
+    <svg width="420" height="260" viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+      <!-- Edges -->
+      <line x1="210" y1="40" x2="100" y2="130" stroke="#2a3828" stroke-width="1.5"/>
+      <line x1="210" y1="40" x2="320" y2="130" stroke="#2a3828" stroke-width="1.5"/>
+      <line x1="100" y1="130" x2="52"  y2="220" stroke="#2a3828" stroke-width="1.5"/>
+      <line x1="100" y1="130" x2="148" y2="220" stroke="#2a3828" stroke-width="1.5"/>
+      <line x1="320" y1="130" x2="272" y2="220" stroke="#2a3828" stroke-width="1.5"/>
+      <line x1="320" y1="130" x2="368" y2="220" stroke="#2a3828" stroke-width="1.5"/>
+      <!-- Nodes -->
+      <circle cx="210" cy="40"  r="14" fill="#1b231a" stroke="#6fc45a" stroke-width="1.5"/>
+      <circle cx="100" cy="130" r="12" fill="#1b231a" stroke="#5aade0" stroke-width="1.5"/>
+      <circle cx="320" cy="130" r="12" fill="#1b231a" stroke="#5aade0" stroke-width="1.5"/>
+      <!-- Terminal nodes -->
+      <rect x="34"  y="208" width="36" height="28" rx="6" fill="#1f2a1d" stroke="#2a3828"/>
+      <rect x="130" y="208" width="36" height="28" rx="6" fill="#1f2a1d" stroke="#2a3828"/>
+      <rect x="254" y="208" width="36" height="28" rx="6" fill="#1f2a1d" stroke="#2a3828"/>
+      <rect x="350" y="208" width="36" height="28" rx="6" fill="#1f2a1d" stroke="#2a3828"/>
+      <!-- Node labels -->
+      <text x="210" y="45" text-anchor="middle" font-size="11" fill="#6fc45a">Anne</text>
+      <text x="100" y="135" text-anchor="middle" font-size="11" fill="#5aade0">Bob</text>
+      <text x="320" y="135" text-anchor="middle" font-size="11" fill="#5aade0">Bob</text>
+      <!-- Edge labels -->
+      <text x="148" y="82" text-anchor="middle" font-size="12" fill="#96d986">A</text>
+      <text x="272" y="82" text-anchor="middle" font-size="12" fill="#96d986">B</text>
+      <text x="66"  y="183" text-anchor="middle" font-size="12" fill="#8faec4">C</text>
+      <text x="134" y="183" text-anchor="middle" font-size="12" fill="#8faec4">D</text>
+      <text x="286" y="183" text-anchor="middle" font-size="12" fill="#8faec4">C</text>
+      <text x="374" y="183" text-anchor="middle" font-size="12" fill="#8faec4">D</text>
+      <!-- Payoff labels -->
+      <text x="52"  y="227" text-anchor="middle" font-size="10" fill="#c8a84b">5,3</text>
+      <text x="148" y="227" text-anchor="middle" font-size="10" fill="#c8a84b">0,0</text>
+      <text x="272" y="227" text-anchor="middle" font-size="10" fill="#c8a84b">0,0</text>
+      <text x="368" y="227" text-anchor="middle" font-size="10" fill="#c8a84b">3,5</text>
+    </svg>
+  </div>
+  <p style="font-size:13px; color:var(--muted); text-align:center;">Anne이 먼저 A/B를 선택, 그 다음 Bob이 C/D를 선택하는 순차 게임</p>
+
+  <div class="insight">
+    <div class="insight-label">💡 두 표현 형식의 관계</div>
+    <p>모든 전개형 게임은 정규형으로 변환 가능하다. (역은 일반적으로 불가능.) 전개형에서 각 플레이어의 <strong>전체 전략 플랜(contingent strategy)</strong>을 하나의 전략으로 표현하면 정규형이 된다.</p>
+    <div class="math">
+전개형 → 정규형: 항상 가능
+정규형 → 전개형: 일반적으로 정보가 손실됨
+    </div>
+  </div>
+</div>
+
+<!-- ============================== SUMMARY ============================== -->
+<div class="divider"></div>
+<div class="section">
+  <div class="section-header">
+    <span class="sec-num" style="background:rgba(200,168,75,0.1);border-color:rgba(200,168,75,0.2);color:var(--gold);">★</span>
+    <h2>LN 01 핵심 요약</h2>
+  </div>
+
+  <table class="ct">
+    <thead><tr><th>개념</th><th>핵심 내용</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>게임이론의 필요성</strong></td>
+        <td>경제 주체 간 상호작용 → 결과가 상대방 행동에 의존 → 최적화만으로 불충분</td>
+      </tr>
+      <tr>
+        <td><strong>비협력 게임 3요소</strong></td>
+        <td>① Players &nbsp; ② Strategies &nbsp; ③ Payoffs</td>
+      </tr>
+      <tr>
+        <td><strong>Cooperative vs Non-coop</strong></td>
+        <td>본 강의는 비협력 게임만 다룸 (Nash 패러다임)</td>
+      </tr>
+      <tr>
+        <td><strong>Strategic Form</strong></td>
+        <td>타이밍 비명시, 행렬 표현, 동시 행동 → <em>LN 02</em></td>
+      </tr>
+      <tr>
+        <td><strong>Extensive Form</strong></td>
+        <td>타이밍 명시, 게임 트리, 순차 행동 → <em>LN 03</em></td>
+      </tr>
+      <tr>
+        <td><strong>핵심 예시</strong></td>
+        <td>Prisoner's Dilemma, Matching Pennies, Bank Run, 핵군비경쟁</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="key-box" style="margin-top:24px;">
+    <div class="key-label">💡 시험 포인트</div>
+    <ul class="sl">
+      <li>게임이론이 <strong>왜 필요한지</strong> 설명할 수 있어야 함 — 상호의존성(interdependence)이 핵심</li>
+      <li>비협력 게임의 <strong>3요소</strong>를 정확히 나열하고 설명할 수 있어야 함</li>
+      <li>Strategic Form vs Extensive Form의 <strong>차이점</strong> (타이밍 명시 여부)</li>
+      <li>Bank Run 예시 — <strong>자기실현적 균형</strong>의 개념 이해</li>
+      <li>Cooperative vs Non-cooperative의 핵심 차이 — <strong>구속력 있는 합의 가능 여부</strong></li>
+    </ul>
+  </div>
+
+  <div class="two-col" style="margin-top:20px;">
+    <a href="../index.html" style="text-decoration:none;">
+      <div class="card" style="cursor:pointer; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#354a32'" onmouseout="this.style.borderColor='#2a3828'">
+        <div class="card-title" style="color:var(--muted);">← 목차로 돌아가기</div>
+        <p style="font-size:13px; color:var(--muted);">모든 강의노트 목록</p>
+      </div>
+    </a>
+    <a href="../lecture2/index.html" style="text-decoration:none;">
+      <div class="card" style="cursor:pointer; border-color: rgba(111,196,90,0.25); transition: border-color 0.2s;" onmouseover="this.style.borderColor='#6fc45a'" onmouseout="this.style.borderColor='rgba(111,196,90,0.25)'">
+        <div class="card-title" style="color:var(--accent2);">LN 02 보러가기 →</div>
+        <p style="font-size:13px; color:var(--muted);">Strategic-Form Games · Nash Equilibrium · 응용 모델</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+</main>
+
+<a href="#" class="back-top">↑ TOP</a>
+
+</body>
+</html>
